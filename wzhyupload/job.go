@@ -348,7 +348,7 @@ func queryDiff(db ddb.DB, table *data.Table, shadowtable string, tableField []in
 		if err != nil {
 			return nil, nil, err
 		}
-		sonRows, err := db.Query(fmt.Sprintf("select * from %s where %s ", sonTable.Name, where), params...)
+		sonRows, err := db.Query(fmt.Sprintf("select /*+parallel(4)*/* from %s where %s ", sonTable.Name, where), params...)
 		if err != nil {
 			return nil, nil, err
 		}

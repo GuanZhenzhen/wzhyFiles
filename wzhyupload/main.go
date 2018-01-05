@@ -69,10 +69,9 @@ func main() {
 		panic(err)
 	}
 	//凌晨两点执行
-	// if err := jobs.AddFunc("0 0 2 * * *", taskRun); err != nil {
-	// 	panic(err)
-	// }
-	taskRun()
+	if err := jobs.AddFunc("0 0 2 * * *", taskRun); err != nil {
+		panic(err)
+	}
 	jobs.Start()
 	for _, one := range jobs.Entries() {
 		fmt.Printf("job next:%s\n", one.Next)
@@ -80,7 +79,7 @@ func main() {
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
-	//uploadAll()
+	uploadAll()
 	dlog.Println("start service...")
 	if *build {
 		//马上执行一次
