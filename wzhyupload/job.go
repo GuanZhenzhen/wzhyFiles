@@ -51,7 +51,7 @@ func taskRun() {
 		return
 	}
 	//然后开始上传
-	uploadAll()
+	//uploadAll()
 
 	dlog.Println("job finished")
 }
@@ -339,28 +339,38 @@ func queryDiff(db ddb.DB, table *data.Table, shadowtable string, tableField []in
 	sonMap := make(map[string][][]interface{})
 	//子表字段长度集
 	sonFeild := make(map[string][]int)
-	for _, sonTable := range maintable {
-		strSon := fmt.Sprintf("%s in(?)", sonTable.PreID)
-		if err != nil {
-			return nil, nil, err
+	//判断主表是否有数据变动，如有,则对子表进行查询
+	if len(rev) > 0 {
+		//得到需要查询子表的主键值
+		sonPK := make([]interface{}, len(rev))
+		for i, value := range rev {
+			sonPK[i] = value[0]
 		}
-		where, params, err := data.In(strSon, pkvalues)
-		if err != nil {
-			return nil, nil, err
+		//查询所有子表
+		for _, sonTable := range maintable {
+			strSon := fmt.Sprintf("%s in(?)", sonTable.PreID)
+			if err != nil {
+				return nil, nil, err
+			}
+			where, params, err := data.In(strSon, sonPK)
+			if err != nil {
+				return nil, nil, err
+			}
+			sonRows, err := db.Query(fmt.Sprintf("select /*+parallel(4)*/* from %s where %s ", sonTable.Name, where), params...)
+			if err != nil {
+				return nil, nil, err
+			}
+			defer sonRows.Close()
+			//转换查出的子表信息
+			sonRow, err := trunRows(sonRows)
+			if err != nil {
+				return nil, nil, err
+			}
+			sonMap[sonTable.Name] = sonRow
+			sonFeild[sonTable.Name] = sonTable.Sizes
 		}
-		sonRows, err := db.Query(fmt.Sprintf("select /*+parallel(4)*/* from %s where %s ", sonTable.Name, where), params...)
-		if err != nil {
-			return nil, nil, err
-		}
-		defer sonRows.Close()
-		//转换查出的子表信息
-		sonRow, err := trunRows(sonRows)
-		if err != nil {
-			return nil, nil, err
-		}
-		sonMap[sonTable.Name] = sonRow
-		sonFeild[sonTable.Name] = sonTable.Sizes
 	}
+
 	//添加信息
 	dateTimeFields := []int{}
 	for i, col := range table.Columns {
@@ -437,21 +447,6 @@ func alterLine(FieldSize []int, data []interface{}) ([]string, error) {
 	return writeLine, nil
 }
 
-// type mainRows []mainRow
-// type mainRow []interface{}
-// func(m mainRow) clone()mainRow{
-// 	rev :=make(mainRow,len(m))
-// 	copy(rev,m)
-// 	return rev
-// }
-// func(m mainRows) clone()mainRows{
-// 	rev :=mainRows{}
-// 	for _,row :=range m{
-// 		rev =append(rev,row.clone())
-// 	}
-// 	return rev
-// }
-//将重数据库里查出的rows转变为[][]interface{}
 func trunRows(rows *sql.Rows) ([][]interface{}, error) {
 	rev := [][]interface{}{}
 	cols, err := rows.Columns()
