@@ -49,7 +49,7 @@ func taskRun() {
 		return
 	}
 	//然后开始上传
-	//uploadAll()
+	uploadAll()
 
 	dlog.Println("job finished")
 }
@@ -385,7 +385,7 @@ func queryDiff(db ddb.DB, table *data.Table, shadowtable string, tableField []in
 		shadowLine := make([]interface{}, len(newLine))
 		copy(shadowLine, newLine)
 		revShadow = append(revShadow, shadowLine)
-		//设置主表uuid的值
+		//设置主表guid的值
 		guid := newLine[0].(string)
 		if len(guid) < 32 {
 			guid = guid + strings.Repeat("a", 32-len(guid))
