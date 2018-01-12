@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"encoding/hex"
 	"io/ioutil"
 	"log"
 	"strings"
@@ -21,7 +20,6 @@ import (
 	"github.com/linlexing/dbx/data"
 	"github.com/linlexing/dbx/ddb"
 	"github.com/linlexing/dbx/schema"
-	"github.com/pborman/uuid"
 	"github.com/robfig/cron"
 )
 
@@ -388,7 +386,11 @@ func queryDiff(db ddb.DB, table *data.Table, shadowtable string, tableField []in
 		copy(shadowLine, newLine)
 		revShadow = append(revShadow, shadowLine)
 		//设置主表uuid的值
-		newLine[2] = interface{}(hex.EncodeToString(uuid.NewUUID()))
+		guid := newLine[0].(string)
+		if len(guid) < 32 {
+			guid = guid + strings.Repeat("a", 32-len(guid))
+		}
+		newLine[2] = guid
 		//设置时间字段
 		for _, idx := range dateTimeFields {
 			newLine[idx] = time.Now().Format("20060102150405")
