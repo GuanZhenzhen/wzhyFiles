@@ -68,8 +68,8 @@ func main() {
 	if err := readConfig(filepath.Join(workDir, "config.yaml")); err != nil {
 		panic(err)
 	}
-	//凌晨两点执行
-	if err := jobs.AddFunc("0 0 2 * * *", taskRun); err != nil {
+	//凌晨一点执行
+	if err := jobs.AddFunc("0 0 1 * * *", taskRun); err != nil {
 		panic(err)
 	}
 	jobs.Start()
